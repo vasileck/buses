@@ -1,0 +1,76 @@
+
+CREATE TABLE IF NOT EXISTS stops (
+    stop_id SERIAL PRIMARY KEY,
+    name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS routes (
+    route_id SERIAL PRIMARY KEY,
+    bus_number VARCHAR(50) NOT NULL,  -- например, "Автобус №11"
+    final_stop VARCHAR(255) NOT NULL  -- название конечной остановки, например "ост. Попова"
+);
+
+CREATE TABLE IF NOT EXISTS route_stops (
+    route_stop_id SERIAL PRIMARY KEY,
+    route_id INT NOT NULL REFERENCES routes(route_id) ON DELETE CASCADE,
+    stop_id INT NOT NULL REFERENCES stops(stop_id) ON DELETE CASCADE,
+    position INT NOT NULL               -- Порядок следования
+);
+
+CREATE TABLE IF NOT EXISTS route_stop_times (
+    route_stop_time_id SERIAL PRIMARY KEY,
+    route_stop_id INT NOT NULL REFERENCES route_stops(route_stop_id) ON DELETE CASCADE,
+    arrival_time TIME NOT NULL
+);
+
+
+
+
+
+INSERT INTO stops (name) VALUES ('ул. Пушкина');
+INSERT INTO stops (name) VALUES ('ул. Ленина');
+INSERT INTO stops (name) VALUES ('ост. Попова');
+
+INSERT INTO routes (bus_number, final_stop) VALUES ('Автобус №11', 'ост. Попова');
+INSERT INTO routes (bus_number, final_stop) VALUES ('Автобус №21', 'ост. Ленина');
+
+INSERT INTO route_stops (route_id, stop_id, position)
+    VALUES (1, 1, 1), (1, 2, 2), (1, 3, 3);
+
+
+INSERT INTO route_stops (route_id, stop_id, position)
+    VALUES (2, 1, 1), (2, 3, 2), (2, 2, 3);
+
+INSERT INTO route_stop_times (route_stop_id, arrival_time) VALUES 
+  (1, '08:15'),
+  (1, '08:40'),
+  (1, '09:15'),
+  (1, '09:40'),
+  (1, '10:15');
+
+INSERT INTO route_stop_times (route_stop_id, arrival_time) VALUES 
+  (2, '08:20'),  -- ул. Ленина
+  (2, '08:45'),
+  (3, '08:30'),  -- ост. Попова
+  (3, '09:00');
+
+INSERT INTO route_stop_times (route_stop_id, arrival_time) VALUES
+  (4, '08:30'),
+  (4, '09:04'),
+  (4, '09:30'),
+  (5, '08:45'),  -- ост. Попова (второй stop по порядку)
+  (5, '09:15'),
+  (6, '08:55'),  -- ул. Ленина (конечная для маршрута 21)
+  (6, '09:25');
+
+
+
+INSERT INTO route_stop_times (route_stop_id, arrival_time)
+SELECT
+    :YOUR_ROUTE_STOP_ID AS route_stop_id,
+    gs.t AS arrival_time
+FROM generate_series(
+    '00:00:00'::time,
+    '23:59:00'::time,
+    '1 minute'::interval
+) AS gs(t);
